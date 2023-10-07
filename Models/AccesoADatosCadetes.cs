@@ -14,4 +14,15 @@ public class AccesoADatosCadetes{
                 return null;
             }
         }
+    public bool Guardar(List<Cadete> cadetes){
+
+        string listaCadetes = JsonSerializer.Serialize(cadetes);
+        File.WriteAllText("Cadetes.json", listaCadetes);
+        if (listaCadetes != null)
+        {
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

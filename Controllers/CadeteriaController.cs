@@ -84,6 +84,25 @@ public class CadeteriaController : ControllerBase // Herencia de la clase Contro
         return Ok(pedCadeteCambiado);
     }
 
+    // [Get] GetPedido/{id} : devuelve un pedido especificado por el id
+    [HttpGet("GetPedido")]
+    public ActionResult<Pedido> GetPedido(int idPedido){
+        var pedido = cadeteria.buscarPedido(idPedido);
+        return Ok(pedido);
+    }
     
+    // [Get] GetCadete/{id} : devuelve un cadete especificado por el id
+    [HttpGet("GetCadete")]
+    public ActionResult<Cadete> GetCadete(int idCadete){
+        var cadete = cadeteria.buscarCadete(idCadete);
+        return Ok(cadete);
+    }
+
+    // [Post] AddCadete : agrega un cadete nuevo a la cadetería.
+    [HttpPost("AddCadete")]
+    public ActionResult<List<Cadete>> AddCadete(Cadete cad){
+        var cadete = cadeteria.AgregarCadetes(cad);
+        return Ok(cadete);
+    }
 
 }

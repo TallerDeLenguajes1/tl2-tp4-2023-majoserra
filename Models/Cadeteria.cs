@@ -41,6 +41,7 @@ public class Cadeteria
         // Obtenemos los Cadetes
         accesoCadetes = new AccesoADatosCadetes();
         ListaCadete = accesoCadetes.Obtener();
+        this.accesoCadetes = accesoCadetes;
         // Obtenemos los pedidos
         accesoPedidos = new AccesoADatosPedidos();
         this.accesoPedidos = accesoPedidos;
@@ -87,11 +88,11 @@ public class Cadeteria
         }
         
     }
-    //Constructor de Cadeteria
-    
-    
-    public void AgregarCadetes(List<Cadete> Lista){
-        ListaCadete = Lista;
+    public Cadete AgregarCadetes(Cadete cad){
+        cad.Id = ListaCadete.Count(); // al id del cadete lo el tamaño de la lista
+        ListaCadete.Add(cad);  // añadimos al cadete a la lista 
+        accesoCadetes.Guardar(ListaCadete);
+        return cad;
     }
     // Aceptar un pedido y ponerlo en "Espera"
     // public void AceptarPedido(int num, string obs, string nomb, string dir, string telef, string datos)
@@ -161,6 +162,10 @@ public class Cadeteria
     public Pedido buscarPedido(int id_pedido){
         Pedido? ped = listaPedido.FirstOrDefault(ped => ped.Numero == id_pedido);
         return ped;
+    }
+    public Cadete buscarCadete(int idCadete){
+        Cadete? cad = ListaCadete.FirstOrDefault(cad => cad.Id == idCadete);
+        return cad;
     }
     public float JornalACobrar(int id_cad)
     {
