@@ -1,3 +1,6 @@
+using EspacioAccesoADatosCadeteria;
+using EspacioAccesoADatosCadetes;
+using EspacioAccesoADatosPedidos;
 using EspacioInforme;
 using EspacioPedido;
 using Microsoft.AspNetCore.Mvc;
@@ -9,14 +12,17 @@ namespace CadeteriaController;
 
 public class CadeteriaController : ControllerBase // Herencia de la clase ControllerBase 
 {
-    private static Cadeteria? cadeteria; // campo estatico (Al ser estatica esta variable es compartida entre todas las instancias de la clase)
+    private Cadeteria? cadeteria; // campo estatico (Al ser estatica esta variable es compartida entre todas las instancias de la clase)
 
     private readonly ILogger<CadeteriaController> _logger; // se utiliza para realizar registros  y (readonly siginifca que una vez que se asigna el valor no puede volver a cambiarse)
 
     public CadeteriaController(ILogger<CadeteriaController> logger)
     {
         _logger = logger;
-        cadeteria = Cadeteria.GetInstance(); // Consultar 
+        var accesoCadeteria = new AccesoADatosCadeteria();
+        var accesoCadetes = new AccesoADatosCadetes();
+        var accesoPedidos = new AccesoADatosPedidos();
+        cadeteria = new Cadeteria(accesoCadeteria, accesoCadetes, accesoPedidos); 
     }
     
 
@@ -36,8 +42,8 @@ public class CadeteriaController : ControllerBase // Herencia de la clase Contro
 
     [HttpGet("GetInforme")]
     // [Get] GetInforme() => Retorna un objeto Informe
-    public ActionResult<string> GetInforme(int id_cad, List<Pedido> ListaPedido){
-        Informe info = new Informe(cadeteria, id_cad, listaPedido);
+    public ActionResult<string> GetInforme(int id_cad){
+        Informe info = cadeteria.GetInforme(id_cad);
         return Ok(info);
     }
 
@@ -45,8 +51,15 @@ public class CadeteriaController : ControllerBase // Herencia de la clase Contro
     // [Post] AgregarPedido(Pedido pedido)
     public ActionResult<Pedido> AgregarPedido(Pedido pedido){
 
-        var ped = cadeteria.AgregarPedido(pedido);
-        return Ok(pedido);
+        bool ped = cadeteria.AgregarPedido(pedido);
+        
+        if (ped)
+        {
+            return Ok(pedido);
+        }else
+        {
+            return BadRequest(pedido);
+        }
     }
 
     [HttpPut("AsignarPedido")]
@@ -59,8 +72,9 @@ public class CadeteriaController : ControllerBase // Herencia de la clase Contro
     [HttpPut("CambiarEstadoPedido")]
     // [Put] CambiarEstadoPedido(int idPedido,int NuevoEstado)
     public ActionResult<Pedido> CambiarEstadoPedido(int idPedido, int nuevoEstado){
-        Pedido pedNuevoEstado = cadeteria.CambiarEstadoDePedido(idPedido, nuevoEstado);
-        return Ok(pedNuevoEstado);
+        bool control = cadeteria.CambiarEstadoDePedido(idPedido, nuevoEstado);
+        Pedido pedidoBuscado = cadeteria.buscarPedido(idPedido);
+        return Ok(pedidoBuscado);
     } 
 
     [HttpPut("CambiarCadetePedido")]
@@ -69,5 +83,7 @@ public class CadeteriaController : ControllerBase // Herencia de la clase Contro
         Pedido pedCadeteCambiado = cadeteria.ReasignarPedido(idPedido, idNuevoCadete);
         return Ok(pedCadeteCambiado);
     }
+
+    
 
 }

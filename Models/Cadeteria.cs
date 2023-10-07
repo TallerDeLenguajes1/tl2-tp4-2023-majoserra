@@ -1,6 +1,9 @@
 using System.ComponentModel;
 using System.Data.Common;
-using EspacioAccesoADatos;
+using EspacioAccesoADatosCadeteria;
+using EspacioAccesoADatosCadetes;
+using EspacioAccesoADatosPedidos;
+using EspacioInforme;
 
 namespace EspacioPedido;
 
@@ -8,26 +11,59 @@ public class Cadeteria
 {
     private string? nombre;
     private string? telefono;
-    private List<Cadete> ListaCadete = new List<Cadete>();
-
-    /*Agregar ListadoPedidos en la clase Cadeteria que contenga todo los pedidos que
-    se vayan generando.*/
-    private List<Pedido> listaPedido = new List<Pedido>();
-    public List<Pedido> ListaPedido { get => listaPedido; }
+    private List<Cadete> ListaCadete;
+    private List<Pedido>? listaPedido;
+    private AccesoADatosPedidos accesoPedidos;
+    private AccesoADatosCadetes accesoCadetes;
     public string? Nombre { get => nombre; set => nombre = value; }
     public string? Telefono { get => telefono; set => telefono = value; }
 
-    private static Cadeteria? instance; // instancia de cadeteriaa
+    // Comentamos el Singleton , intentamos no trabajar con este 
+
+    /*private static Cadeteria? instance; // instancia de cadeteriaa
     public static Cadeteria GetInstance(){
         if (instance == null)
         {
-            var Json = new AccesoJSON(); 
-            List<Cadeteria> listaCadeteria = Json.LeerCadeteria("Cadeteria.json"); // Falta la ruta del archivo
-            instance = listaCadeteria[0];
-            var listaCadetes = Json.LeerCadetes("Cadetes.json");
+            var JsonCadeteria = new AccesoADatosCadeteria(); 
+            Cadeteria cadeteria = JsonCadeteria.Obtener(); // Falta la ruta del archivo
+            instance = cadeteria;
+            var JsonCadete = new AccesoADatosCadetes(); 
+            var listaCadetes = JsonCadete.Obtener();
             instance.AgregarCadetes(listaCadetes);
+            instance.
         }
         return instance;
+    }*/
+    public Cadeteria(AccesoADatosCadeteria accesoCadeteria, AccesoADatosCadetes accesoCadetes, AccesoADatosPedidos accesoPedidos){
+        Cadeteria cadeteria = accesoCadeteria.Obtener();
+        this.nombre = cadeteria.nombre;
+        this.telefono = cadeteria.telefono;
+        // Obtenemos los Cadetes
+        accesoCadetes = new AccesoADatosCadetes();
+        ListaCadete = accesoCadetes.Obtener();
+        // Obtenemos los pedidos
+        accesoPedidos = new AccesoADatosPedidos();
+        this.accesoPedidos = accesoPedidos;
+        listaPedido = accesoPedidos.Obtener();
+        // cargamos los datos cadeteria
+        
+    }
+    public Cadeteria(){ // contructor vacio
+
+    }
+    public Cadeteria(string nombre, string telefono)
+    {
+        this.nombre = nombre;
+        this.telefono = telefono;
+        ListaCadete = new List<Cadete>();
+        listaPedido = new List<Pedido>();
+    }
+
+    public Informe GetInforme(int id_cad){
+        AccesoADatosCadeteria accesoCadeteria = new AccesoADatosCadeteria();
+        var cadeteria = accesoCadeteria.Obtener();
+        var info = new Informe(id_cad, cadeteria);
+        return info;
     }
     
     public List<Pedido> GetPedidos(){ // Retornar Lista de Pedidos
@@ -37,41 +73,43 @@ public class Cadeteria
     public List<Cadete> GetCadetes(){//Retornar Lista de Cadetes
         return ListaCadete;
     }
-    public Pedido AgregarPedido(Pedido pedido){
+    public bool AgregarPedido(Pedido pedido){
+        var pedidos = new AccesoADatosPedidos();
         pedido.Id_Cadete= 99;
-        pedido.Numero = listaPedido.Count(); // se incremente solo 
+        pedido.Numero = listaPedido.Count(); // se incremente solo
         listaPedido.Add(pedido);
-        return pedido;
+        if (pedidos.Guardar(listaPedido))
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
+        
     }
     //Constructor de Cadeteria
-    public Cadeteria(){
-
-    }
-    public Cadeteria(string nombre, string telefono)
-    {
-        this.nombre = nombre;
-        this.telefono = telefono;
-
-    }
+    
     
     public void AgregarCadetes(List<Cadete> Lista){
         ListaCadete = Lista;
     }
     // Aceptar un pedido y ponerlo en "Espera"
-    public void AceptarPedido(int num, string obs, string nomb, string dir, string telef, string datos)
-    {
-        Pedido pedido = new Pedido(num, obs, nomb, dir, telef, datos); //Creamos el pedido
-        listaPedido.Add(pedido); // Agregar los pedido a la Lista de Pedidos
-    }
+    // public void AceptarPedido(int num, string obs, string nomb, string dir, string telef, string datos)
+    // {
+    //     Pedido pedido = new Pedido(num, obs, nomb, dir, telef, datos); //Creamos el pedido
+    //     listaPedido.Add(pedido); // Agregar los pedido a la Lista de Pedidos
+    // }
 
     // Asignar un Pedido a un Cadete 
     /* Agregar el método AsignarCadeteAPedido en la clase Cadeteria que recibe como
     parámetro el id del cadete y el id del Pedido*/
     public Pedido AsignarPedido(int id_pedido, int idcad)
     {
-        Cadete? cadBuscado = ListaCadete.FirstOrDefault(cad => cad.Id == idcad);
+      //  Cadete? cadBuscado = ListaCadete.FirstOrDefault(cad => cad.Id == idcad); control para saber si el id del cadete existe 
         Pedido? pedBuscado = listaPedido.FirstOrDefault(p => p.Numero == id_pedido);
-        pedBuscado.Id_Cadete = cadBuscado.Id;
+        pedBuscado.Id_Cadete = idcad;
+        accesoPedidos.Guardar(listaPedido);
+
         return pedBuscado;  
     }
     public void CrearCadete(int id, string nomb, string dir, string telef)
@@ -84,15 +122,24 @@ public class Cadeteria
     {
         Pedido? pedBuscado = listaPedido.FirstOrDefault(p => p.Numero == idPedido);
         Cadete? cadBuscado = ListaCadete.FirstOrDefault(cad => cad.Id == idNuevoCadete);
-        pedBuscado.Id_Cadete = cadBuscado.Id;
+        pedBuscado.Id_Cadete = idNuevoCadete;
+        accesoPedidos.Guardar(listaPedido);
         return pedBuscado;
     }
 
-    public Pedido CambiarEstadoDePedido(int id_pedido, int estado) //FAlTA controlar que el pedido tenga un cadete asociado
+    public bool CambiarEstadoDePedido(int id_pedido, int estado) //FAlTA controlar que el pedido tenga un cadete asociado
     {
-        Pedido? pedEncontrado = ListaPedido.FirstOrDefault(p => p.Numero == id_pedido);
+        var pedidos = accesoPedidos.Obtener();
+        Pedido? pedEncontrado = pedidos.FirstOrDefault(p => p.Numero == id_pedido);
         pedEncontrado.Estado = estado;
-        return pedEncontrado;
+        accesoPedidos.Guardar(pedidos);
+        if (pedEncontrado!=null)
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
     }
     public int EnviosEntregados(int id_cad)
     {
@@ -111,7 +158,10 @@ public class Cadeteria
         return cantEnvios;
     }
     // Agregar el método JornalACobrar en la clase Cadeteria que recibe como parámetro el id del cadete y devuelve el monto a cobrar para dicho cadete
-
+    public Pedido buscarPedido(int id_pedido){
+        Pedido? ped = listaPedido.FirstOrDefault(ped => ped.Numero == id_pedido);
+        return ped;
+    }
     public float JornalACobrar(int id_cad)
     {
         return EnviosEntregados(id_cad) * 500;
